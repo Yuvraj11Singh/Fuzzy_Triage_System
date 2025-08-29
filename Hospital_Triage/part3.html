@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Hospital Triage System</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --accent-gradient: linear-gradient(135deg, #3498db, #2980b9);
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #3498db;
+            --dark-color: #2c3e50;
+            --light-gray: #ecf0f1;
+            --medium-gray: #bdc3c7;
+            --text-color: #2c3e50;
+            --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.15);
+            --shadow-heavy: 0 12px 40px rgba(0, 0, 0, 0.2);
+            --border-radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: minmax(400px, 1fr) minmax(350px, 1fr) 380px;
+            gap: 24px;
+            max-width: 1600px;
+            width: 100%;
+            padding: 24px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+
+        .panel:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .panel-header {
+            background: var(--accent-gradient);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .panel-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel-header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .panel-content {
+            padding: 32px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .triage-panel .panel-content {
+            max-height: calc(100vh - 140px);
+        }
+
+        /* Form Styling */
+        .form-section {
+            margin-bottom: 32px;
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            color: var(--dark-color);
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            padding: 14px 16px;
+            border: 2px solid #e8ecf0;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--info-color);
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .symptom-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .symptom-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .symptom-card:hover {
+            border-color: var(--info-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .symptom-card h3 {
+            color: var(--dark-color);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .symptom-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 8px 0;
+        }
+
+        .symptom-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .symptom-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .severity-select {
+            min-width: 140px;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            background: var(--accent-gradient);
+            color: white;
+            padding: 18px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            margin-top: 24px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Queue Management Styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+            box-shadow: var(--shadow-light);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--info-color);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .critical-alert {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 600;
+            text-align: center;
+            animation: alertPulse 2s infinite;
+            display: none;
+            box-shadow: var(--shadow-medium);
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .queue-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .queue-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .queue-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--info-color);
+        }
+
+        .queue-item.priority-1::before { background: #e74c3c; }
+        .queue-item.priority-2::before { background: #f39c12; }
+        .queue-item.priority-3::before { background: #f1c40f; }
+        .queue-item.priority-4::before { background: #2ecc71; }
+        .queue-item.priority-5::before { background: #95a5a6; }
+
+        .queue-item:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-medium);
+            border-color: var(--info-color);
+        }
+
+        .queue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .patient-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .queue-position {
+            background: var(--light-gray);
+            color: var(--dark-color);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .patient-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .priority-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .priority-1 { background: #fee2e2; color: #dc2626; }
+        .priority-2 { background: #fed7aa; color: #ea580c; }
+        .priority-3 { background: #fef3c7; color: #d97706; }
+        .priority-4 { background: #dcfce7; color: #16a34a; }
+        .priority-5 { background: #f1f5f9; color: #64748b; }
+
+        .empty-queue {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            margin-top: 60px;
+            padding: 40px 20px;
+        }
+
+        /* Chatbot Styles */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 48px);
+        }
+
+        .chat-header {
+            background: var(--accent-gradient);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .quick-actions {
+            padding: 16px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .quick-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+        }
+
+        .quick-btn {
+            background: white;
+            border: 1px solid #d1d5db;
+            color: var(--info-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .quick-btn:hover {
+            background: var(--info-color);
+            color: white;
+            border-color: var(--info-color);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(100vh - 300px);
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            animation: messageSlide 0.3s ease-out;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .bot-avatar {
+            background: var(--accent-gradient);
+            color: white;
+        }
+
+        .user-avatar {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .message-content {
+            max-width: 280px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            white-space: pre-line;
+        }
+
+        .message:not(.user) .message-content {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: var(--text-color);
+        }
+
+        .message.user .message-content {
+            background: var(--accent-gradient);
+            color: white;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            transition: var(--transition);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--info-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .chat-send-btn {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .chat-send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-light);
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: #f1f5f9;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .chat-panel {
+                height: 600px;
+            }
+
+            .symptom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 16px;
+                gap: 16px;
+            }
+
+            .panel-content {
+                padding: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+
+            .quick-actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Enhanced Triage Input Panel -->
+        <div class="panel triage-panel">
+            <div class="panel-header">
+                <h1>🏥 AI Hospital Triage System</h1>
+                <div class="subtitle">Advanced Patient Assessment & Prioritization</div>
+            </div>
+            
+            <div class="panel-content">
+                <form id="triageForm">
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            👤 Patient Information
+                        </h2>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="patientName">Full Name</label>
+                                <input type="text" id="patientName" class="form-input" required placeholder="Enter patient name">
+                            </div>
+                            <div class="form-group">
+                                <label for="patientAge">Age</label>
+                                <input type="number" id="patientAge" class="form-input" min="0" max="120" required placeholder="Years">
+                            </div>
+                            <div class="form-group">
+                                <label for="patientGender">Gender</label>
+                                <select id="patientGender" class="form-select" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                    <option value="prefer-not-to-say">Prefer not to say</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            🩺 Clinical Assessment
+                        </h2>
+                        <div class="symptom-grid">
+                            <div class="symptom-card">
+                                <h3>🔴 Primary Symptoms</h3>
+                                <div class="symptom-row">
+                                    <span class="symptom-label">Pain Level</span>
+                                    <select class="severity-select" id="painLevel">
+                                        <option value="0">No pain (0)</option>
+                                        <option value="2">Mild (1-3)</option>
+                                        <option value="5">Moderate (4-6)</option>
+                                        <option value="8">Severe (7-8)</option>
+                                        <option value="10">Excruciating (9-10)</option>
+                                    </select>
+                                </div>
+                                <div class="symptom-row">
+                                    <span class="symptom-label">Breathing Issues</span>
+                                    <select class="severity-select" id="breathingDifficulty">
+                                        <option value="0">Normal</option>
+                                        <option value="3">Slight difficulty</option>
+                                        <option value="6">Moderate difficulty</option>
+                                        <option value="9">Severe difficulty</option>
+                                    </select>
+                                </div>
+                                <div class="symptom-row">
+                                    <span class="symptom-label">Consciousness</span>
+                                    <select class="severity-select" id="consciousnessLevel">
+                                        <option value="0">Alert & oriented</option>
+                                        <option value="4">Drowsy</option>
+                                        <option value="7">Confused</option>
+                                        <option value="10">Unconscious</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="symptom-card">
+                                <h3>🫀 Cardiovascular</h3>
+                                <div class="symptom-row">
+                                    <span class="symptom-label">Chest Pain</span>
+                                    <select class="severity-select" id="chestPain">
+                                        <option value="0">None</option>
+                                        <option value="4">Mild discomfort</option>
+                                        <option value="7">Moderate pain</option>
+                                        <option value="10">Severe/crushing</option>
+                                    </select>
+                                </div>
+                                <div class="symptom-row">
+                                    <span class="symptom-label">Heart Rhythm</span>
+                                    <select class="severity-select" id="heartRate">
+                                        <option value="0">Normal rhythm</option>
+                                        <option value="3">Slightly irregular</option>
+                                        <option value="6">Very fast/slow</option>
+                                        <option value="9">Extremely irregular</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="symptom-card">
+                                <h3>🧠 Neurological</h3>
+                                <div class="symptom-row">
+                                    <span class="symptom-label">Headache</span>
+                                    <select class="severity-select" id="headache">
+                                        <option value="0">None</option>
+                                        <option value="2">Mild</option>
+                                        <option value="5">Moderate</option>
+                                        <option value="8">Severe/sudden</option>
+                                    </select>
+                                </div>
+                                <div class="symptom-row">
+                                    <span class="symptom-label">Confusion</span>
+                                    <select class="severity-select" id="confusion">
+                                        <option value="0">Clear thinking</option>
+                                        <option value="4">Mild confusion</option>
+                                        <option value="7">Disoriented</option>
+                                        <option value="10">Severe confusion</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="symptom-card">
+                                <h3>🩸 Critical Signs</h3>
+                                <div class="symptom-row">
+                                    <span class="symptom-label">Bleeding</span>
+                                    <select class="severity-select" id="bleeding">
+                                        <option value="0">None</option>
+                                        <option value="3">Minor bleeding</option>
+                                        <option value="6">Moderate bleeding</option>
+                                        <option value="10">Severe/uncontrolled</option>
+                                    </select>
+                                </div>
+                                <div class="symptom-row">
+                                    <span class="symptom-label">Temperature</span>
+                                    <select class="severity-select" id="fever">
+                                        <option value="0">Normal (98.6°F)</option>
+                                        <option value="2">Low fever (99-101°F)</option>
+                                        <option value="5">High fever (101-103°F)</option>
+                                        <option value="7">Very high (103°F+)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">
+                            📝 Additional Information
+                        </h2>
+                        <div class="form-group">
+                            <label for="additionalSymptoms">Medical History & Additional Symptoms</label>
+                            <textarea id="additionalSymptoms" class="form-textarea" placeholder="Please describe any other symptoms, current medications, allergies, or relevant medical history..."></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        🔍 Analyze Patient & Assign Priority
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Enhanced Queue Management Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <h1>📋 Emergency Queue Dashboard</h1>
+                <div class="subtitle">Real-time Patient Management</div>
+            </div>
+            
+            <div class="panel-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="totalPatients">0</span>
+                        <div class="stat-label">Total Patients</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="criticalPatients">0</span>
+                        <div class="stat-label">Critical Cases</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="avgWaitTime">0</span>
+                        <div class="stat-label">Avg Wait (min)</div>
+                    </div>
+                </div>
+
+                <div id="criticalAlert" class="critical-alert">
+                    🚨 CRITICAL PATIENT ALERT: Immediate medical attention required!
+                </div>
+
+                <div class="queue-container" id="queueContainer">
+                    <div class="empty-queue">
+                        <div style="font-size: 48px; margin-bottom: 16px;">🏥</div>
+                        <div style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Queue is empty</div>
+                        <div style="font-size: 14px;">Add patients using the triage assessment form</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Chatbot Panel -->
+        <div class="panel chat-panel">
+            <div class="chat-header">
+                🤖 Medical Assistant AI
+                <div class="subtitle">Available 24/7 for guidance</div>
+            </div>
+
+            <div class="quick-actions">
+                <div class="quick-actions-grid">
+                    <button class="quick-btn" onclick="sendQuickMessage('How does triage work?')">Triage Process</button>
+                    <button class="quick-btn" onclick="sendQuickMessage('What are emergency signs?')">Emergency Signs</button>
+                    <button class="quick-btn" onclick="sendQuickMessage('Help with symptoms')">Symptom Help</button>
+                    <button class="quick-btn" onclick="sendQuickMessage('Wait time info')">Wait Times</button>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message fade-in">
+                    <div class="message-avatar bot-avatar">🤖</div>
+                    <div class="message-content">
+                        Welcome to the AI Medical Assistant! I'm here to help you understand the triage process, identify emergency symptoms, and answer questions about your visit. 
+
+                        How can I assist you today?
+                    </div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="message-avatar bot-avatar">🤖</div>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <div class="chat-input-container">
+                    <textarea 
+                        class="chat-input" 
+                        id="chatInput" 
+                        placeholder="Ask about symptoms, procedures, or medical concerns..."
+                        rows="1"
+                        onkeypress="handleChatKeyPress(event)"
+                    ></textarea>
+                    <button class="chat-send-btn" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Fuzzy Logic Implementation for Hospital Triage
+        class AdvancedFuzzyTriageSystem {
+            constructor() {
+                this.patients = [];
+                this.patientId = 1;
+                this.priorityThresholds = {
+                    critical: 85,
+                    high: 65,
+                    moderate: 45,
+                    low: 25
+                };
+            }
+
+            // Enhanced membership functions
+            triangularMembership(x, a, b, c) {
+                if (x <= a || x >= c) return 0;
+                if (x === b) return 1;
+                if (x < b) return (x - a) / (b - a);
+                return (c - x) / (c - b);
+            }
+
+            trapezoidalMembership(x, a, b, c, d) {
+                if (x <= a || x >= d) return 0;
+                if (x >= b && x <= c) return 1;
+                if (x < b) return (x - a) / (b - a);
+                return (d - x) / (d - c);
+            }
+
+            // Sigmoid membership function for smooth transitions
+            sigmoidMembership(x, c, a) {
+                return 1 / (1 + Math.exp(-a * (x - c)));
+            }
+
+            // Pain assessment with enhanced granularity
+            painFuzzification(pain) {
+                return {
+                    none: this.trapezoidalMembership(pain, 0, 0, 0.5, 1.5),
+                    minimal: this.triangularMembership(pain, 0, 1.5, 3),
+                    mild: this.triangularMembership(pain, 2, 3.5, 5),
+                    moderate: this.triangularMembership(pain, 4, 5.5, 7),
+                    severe: this.triangularMembership(pain, 6, 7.5, 9),
+                    extreme: this.trapezoidalMembership(pain, 8, 9, 10, 10)
+                };
+            }
+
+            // Breathing assessment
+            breathingFuzzification(breathing) {
+                return {
+                    normal: this.trapezoidalMembership(breathing, 0, 0, 1, 2),
+                    mild: this.triangularMembership(breathing, 1, 3, 5),
+                    moderate: this.triangularMembership(breathing, 4, 6, 8),
+                    severe: this.trapezoidalMembership(breathing, 7, 8.5, 9, 9)
+                };
+            }
+
+            // Consciousness level assessment
+            consciousnessFuzzification(consciousness) {
+                return {
+                    alert: this.trapezoidalMembership(consciousness, 0, 0, 1, 2.5),
+                    drowsy: this.triangularMembership(consciousness, 1.5, 4, 6),
+                    confused: this.triangularMembership(consciousness, 5, 7, 8.5),
+                    unconscious: this.trapezoidalMembership(consciousness, 7.5, 9, 10, 10)
+                };
+            }
+
+            // Enhanced age factor calculation
+            calculateAgeFactor(age) {
+                if (age < 1) return 1.4;        // Neonate
+                if (age < 2) return 1.3;        // Infant
+                if (age < 5) return 1.25;       // Toddler
+                if (age < 12) return 1.2;       // Child
+                if (age < 18) return 1.1;       // Adolescent
+                if (age < 65) return 1.0;       // Adult
+                if (age < 75) return 1.1;       // Senior
+                if (age < 85) return 1.2;       // Elderly
+                return 1.3;                     // Very elderly
+            }
+
+            // Enhanced symptom scoring
+            calculateSymptomScore(symptoms) {
+                const pain = this.painFuzzification(parseFloat(symptoms.painLevel) || 0);
+                const breathing = this.breathingFuzzification(parseFloat(symptoms.breathingDifficulty) || 0);
+                const consciousness = this.consciousnessFuzzification(parseFloat(symptoms.consciousnessLevel) || 0);
+                
+                const chestPain = parseFloat(symptoms.chestPain) || 0;
+                const heartRate = parseFloat(symptoms.heartRate) || 0;
+                const bleeding = parseFloat(symptoms.bleeding) || 0;
+                const fever = parseFloat(symptoms.fever) || 0;
+                const headache = parseFloat(symptoms.headache) || 0;
+                const confusion = parseFloat(symptoms.confusion) || 0;
+
+                let baseScore = 0;
+                let criticalModifiers = 0;
+
+                // Primary scoring based on fuzzy rules
+                baseScore += pain.extreme * 25 + pain.severe * 20 + pain.moderate * 12 + pain.mild * 6;
+                baseScore += breathing.severe * 30 + breathing.moderate * 20 + breathing.mild * 10;
+                baseScore += consciousness.unconscious * 35 + consciousness.confused * 25 + consciousness.drowsy * 15;
+
+                // Critical condition detection
+                if (consciousness.unconscious > 0.7 || breathing.severe > 0.8 || bleeding >= 10) {
+                    criticalModifiers += 40;
+                }
+
+                // Cardiovascular emergency scoring
+                if (chestPain >= 8 && heartRate >= 6) {
+                    criticalModifiers += 35;
+                } else if (chestPain >= 7 || heartRate >= 8) {
+                    criticalModifiers += 25;
+                }
+
+                // Neurological emergency scoring
+                if (headache >= 8 && confusion >= 7) {
+                    criticalModifiers += 30;
+                }
+
+                // Bleeding severity
+                baseScore += bleeding * 2.5;
+
+                // Fever contribution
+                baseScore += fever * 1.8;
+
+                return Math.min(100, baseScore + criticalModifiers);
+            }
+
+            // Main triage calculation with enhanced logic
+            calculateTriagePriority(symptoms, age) {
+                const symptomScore = this.calculateSymptomScore(symptoms);
+                const ageFactor = this.calculateAgeFactor(age);
+                const adjustedScore = Math.min(100, symptomScore * ageFactor);
+
+                let priority, priorityLabel, estimatedWaitTime, recommendations;
+
+                if (adjustedScore >= this.priorityThresholds.critical) {
+                    priority = 1;
+                    priorityLabel = "CRITICAL - Immediate";
+                    estimatedWaitTime = 0;
+                    recommendations = ["Immediate physician evaluation", "Continuous monitoring", "IV access"];
+                } else if (adjustedScore >= this.priorityThresholds.high) {
+                    priority = 2;
+                    priorityLabel = "HIGH - Within 15 min";
+                    estimatedWaitTime = 15;
+                    recommendations = ["Urgent physician evaluation", "Vital signs monitoring", "Pain management"];
+                } else if (adjustedScore >= this.priorityThresholds.moderate) {
+                    priority = 3;
+                    priorityLabel = "MODERATE - Within 30 min";
+                    estimatedWaitTime = 30;
+                    recommendations = ["Standard evaluation", "Symptom monitoring", "Comfort measures"];
+                } else if (adjustedScore >= this.priorityThresholds.low) {
+                    priority = 4;
+                    priorityLabel = "LOW - Within 60 min";
+                    estimatedWaitTime = 60;
+                    recommendations = ["Routine evaluation", "Basic assessment", "Patient education"];
+                } else {
+                    priority = 5;
+                    priorityLabel = "MINIMAL - Within 120 min";
+                    estimatedWaitTime = 120;
+                    recommendations = ["Non-urgent evaluation", "Discharge planning", "Follow-up care"];
+                }
+
+                return {
+                    priority,
+                    priorityLabel,
+                    urgencyScore: Math.round(adjustedScore),
+                    estimatedWaitTime,
+                    recommendations,
+                    riskFactors: this.identifyRiskFactors(symptoms, age)
+                };
+            }
+
+            // Identify specific risk factors
+            identifyRiskFactors(symptoms, age) {
+                const factors = [];
+                
+                if (age < 2 || age > 75) factors.push("Age-related vulnerability");
+                if (parseFloat(symptoms.chestPain) >= 7) factors.push("Cardiac risk");
+                if (parseFloat(symptoms.breathingDifficulty) >= 6) factors.push("Respiratory compromise");
+                if (parseFloat(symptoms.consciousnessLevel) >= 4) factors.push("Neurological concern");
+                if (parseFloat(symptoms.bleeding) >= 6) factors.push("Hemorrhage risk");
+                if (parseFloat(symptoms.fever) >= 5) factors.push("Infection/sepsis risk");
+                
+                return factors;
+            }
+
+            // Enhanced patient management
+            addPatient(patientData, symptoms) {
+                const triageResult = this.calculateTriagePriority(symptoms, patientData.age);
+                
+                const patient = {
+                    id: this.patientId++,
+                    name: patientData.name,
+                    age: patientData.age,
+                    gender: patientData.gender,
+                    symptoms: symptoms,
+                    additionalSymptoms: patientData.additionalSymptoms,
+                    arrivalTime: new Date(),
+                    priority: triageResult.priority,
+                    priorityLabel: triageResult.priorityLabel,
+                    urgencyScore: triageResult.urgencyScore,
+                    estimatedWaitTime: triageResult.estimatedWaitTime,
+                    recommendations: triageResult.recommendations,
+                    riskFactors: triageResult.riskFactors,
+                    status: 'waiting'
+                };
+
+                // Smart queue insertion
+                this.insertPatientInQueue(patient);
+                return patient;
+            }
+
+            insertPatientInQueue(newPatient) {
+                let insertIndex = 0;
+                
+                for (let i = 0; i < this.patients.length; i++) {
+                    const currentPatient = this.patients[i];
+                    
+                    // Priority-based insertion with time consideration
+                    if (currentPatient.priority > newPatient.priority) {
+                        break;
+                    } else if (currentPatient.priority === newPatient.priority) {
+                        // Same priority - consider urgency score and arrival time
+                        if (currentPatient.urgencyScore < newPatient.urgencyScore) {
+                            break;
+                        } else if (currentPatient.urgencyScore === newPatient.urgencyScore && 
+                                 currentPatient.arrivalTime > newPatient.arrivalTime) {
+                            break;
+                        }
+                    }
+                    insertIndex = i + 1;
+                }
+                
+                this.patients.splice(insertIndex, 0, newPatient);
+                this.updateWaitTimes();
+            }
+
+            updateWaitTimes() {
+                // Dynamic wait time calculation based on queue position and capacity
+                const processingTimes = { 1: 20, 2: 30, 3: 25, 4: 20, 5: 15 };
+                let cumulativeTime = 0;
+                
+                this.patients.forEach((patient, index) => {
+                    const baseTime = processingTimes[patient.priority] || 20;
+                    patient.estimatedWaitTime = Math.max(0, cumulativeTime);
+                    cumulativeTime += baseTime;
+                });
+            }
+
+            getPatients() {
+                return this.patients;
+            }
+
+            getDetailedStatistics() {
+                const total = this.patients.length;
+                const byPriority = [1, 2, 3, 4, 5].map(p => 
+                    this.patients.filter(patient => patient.priority === p).length
+                );
+                const critical = byPriority[0];
+                const avgScore = total > 0 ? 
+                    Math.round(this.patients.reduce((sum, p) => sum + p.urgencyScore, 0) / total) : 0;
+                const avgWait = total > 0 ? 
+                    Math.round(this.patients.reduce((sum, p) => sum + p.estimatedWaitTime, 0) / total) : 0;
+                
+                return { total, critical, avgWait, avgScore, byPriority };
+            }
+        }
+
+        // Enhanced Medical Chatbot System
+        class EnhancedMedicalChatbot {
+            constructor() {
+                this.responses = {
+                    greetings: [
+                        "Hello! I'm your AI medical assistant. I can help explain the triage process, identify warning signs, and answer medical questions.",
+                        "Hi! I'm here to assist you with medical information and triage guidance. What would you like to know?",
+                        "Welcome! I can provide information about symptoms, emergency procedures, and hospital processes. How can I help?"
+                    ],
+                    
+                    triageProcess: `Our AI triage system uses advanced fuzzy logic to assess patients based on multiple factors:
+
+🔴 **Priority 1 (Critical)**: Life-threatening conditions requiring immediate attention
+- Unconsciousness, severe breathing difficulty, uncontrolled bleeding
+- Estimated wait: Immediate
+
+🟠 **Priority 2 (High)**: Urgent conditions needing prompt care
+- Severe pain, chest pain, significant breathing issues
+- Estimated wait: Within 15 minutes
+
+🟡 **Priority 3 (Moderate)**: Serious but stable conditions
+- Moderate pain, fever, headaches
+- Estimated wait: Within 30 minutes
+
+🟢 **Priority 4 (Low)**: Less urgent conditions
+- Minor injuries, mild symptoms
+- Estimated wait: Within 60 minutes
+
+⚪ **Priority 5 (Minimal)**: Non-urgent conditions
+- Minor cuts, routine check-ups
+- Estimated wait: Within 2 hours
+
+The system considers your age, symptom severity, and combination of symptoms to determine the most appropriate priority level.`,
+
+                    emergencySigns: `🚨 **CALL 911 IMMEDIATELY** if experiencing:
+
+🫁 **Breathing**: Severe difficulty breathing, can't speak in full sentences
+❤️ **Cardiac**: Chest pain, especially crushing or radiating to arm/jaw
+🧠 **Neurological**: Sudden confusion, slurred speech, face drooping, severe headache
+🩸 **Bleeding**: Severe bleeding that won't stop with pressure
+🤒 **Infection**: High fever with stiff neck, severe abdominal pain
+😵 **Consciousness**: Loss of consciousness, extreme drowsiness
+🤧 **Allergic**: Severe allergic reaction, difficulty swallowing
+
+These symptoms require immediate emergency medical attention and should not wait for triage.`,
+
+                    symptoms: {
+                        pain: `**Pain Assessment Guide**:
+• 0: No pain
+• 1-3: Mild pain (doesn't interfere with activities)
+• 4-6: Moderate pain (interferes with some activities)
+• 7-8: Severe pain (interferes with most activities)
+• 9-10: Excruciating pain (unable to function)
+
+Pain levels 7+ typically receive higher triage priority. Location and type of pain also matter - chest pain, abdominal pain, and head pain are prioritized higher.`,
+
+                        fever: `**Fever Classification**:
+• Normal: 97-99°F (36-37.2°C)
+• Low-grade: 99-101°F (37.2-38.3°C)
+• Moderate: 101-103°F (38.3-39.4°C)
+• High: 103°F+ (39.4°C+)
+
+High fevers, especially with other symptoms like stiff neck, confusion, or rash, require urgent evaluation. Age matters - fever in infants under 3 months is always urgent.`,
+
+                        breathing: `**Breathing Difficulty Levels**:
+• Normal: Comfortable breathing at rest
+• Mild: Slight shortness of breath with exertion
+• Moderate: Difficulty breathing with minimal activity
+• Severe: Trouble breathing at rest, can't speak in full sentences
+
+Any breathing difficulty at rest is considered urgent. Look for signs like using extra muscles to breathe, blue lips/fingernails, or inability to lie flat.`,
+
+                        chest: `**Chest Pain Red Flags**:
+• Crushing, squeezing, or pressure sensation
+• Pain radiating to arm, jaw, neck, or back  
+• Associated with sweating, nausea, or shortness of breath
+• Sudden, severe onset
+• Worsening pain
+
+Chest pain is always taken seriously and typically receives high priority, especially in adults over 35 or those with heart disease risk factors.`
+                    },
+
+                    waitTimes: `**Understanding Wait Times**:
+
+Wait times depend on:
+• Your triage priority level
+• Current patient volume
+• Severity of other patients
+• Available medical staff
+
+Critical patients (Priority 1) are seen immediately, while lower priority patients may experience longer waits during busy periods.
+
+**Tips to reduce wait**:
+• Provide complete, accurate symptom information
+• Bring all medications and medical history
+• Stay in the waiting area (leaving may delay your care)
+• Inform staff if symptoms worsen while waiting`,
+
+                    preparation: `**What to Bring to the Emergency Room**:
+
+📋 **Essential Documents**:
+• Photo ID and insurance cards
+• List of current medications (including doses)
+• Emergency contact information
+• Previous test results if relevant
+
+🏥 **Medical Information**:
+• Allergies (medications, foods, environmental)
+• Chronic medical conditions
+• Previous surgeries or hospitalizations
+• When symptoms started and what makes them better/worse
+
+💊 **Current Medications**:
+• Prescription medications
+• Over-the-counter medications
+• Supplements and vitamins
+• Recent medication changes`
+                };
+                
+                this.conversationContext = [];
+                this.userPreferences = {};
+            }
+
+            // Enhanced message analysis with context awareness
+            analyzeMessage(message) {
+                const msg = message.toLowerCase();
+                this.conversationContext.push(msg);
+                
+                // Keep only last 5 messages for context
+                if (this.conversationContext.length > 5) {
+                    this.conversationContext.shift();
+                }
+
+                // Emergency detection with enhanced keywords
+                if (this.containsEmergencyKeywords(msg)) {
+                    return this.getEmergencyResponse(msg);
+                }
+                
+                // Symptom-specific responses
+                const symptomResponses = this.getSymptomResponse(msg);
+                if (symptomResponses) return symptomResponses;
+                
+                // Process and information responses
+                const processResponses = this.getProcessResponse(msg);
+                if (processResponses) return processResponses;
+                
+                // Contextual responses based on conversation history
+                const contextualResponse = this.getContextualResponse(msg);
+                if (contextualResponse) return contextualResponse;
+                
+                // Default helpful response
+                return this.getDefaultResponse();
+            }
+
+            containsEmergencyKeywords(msg) {
+                const emergencyPatterns = [
+                    /can'?t breathe|cannot breathe|difficulty breathing|shortness of breath/,
+                    /chest pain|heart attack|cardiac arrest/,
+                    /stroke|face drooping|slurred speech/,
+                    /unconscious|passed out|fainted/,
+                    /severe bleeding|won'?t stop bleeding/,
+                    /allergic reaction|can'?t swallow/,
+                    /overdose|poisoning/,
+                    /suicide|self.harm/,
+                    /choking|can'?t swallow/,
+                    /severe abdominal pain|appendicitis/
+                ];
+                
+                return emergencyPatterns.some(pattern => pattern.test(msg));
+            }
+
+            getEmergencyResponse(msg) {
+                return `🚨 **EMERGENCY ALERT** 🚨
+
+If you or someone else is experiencing a life-threatening emergency:
+
+**CALL 911 IMMEDIATELY**
+- Or go directly to the nearest emergency room
+- Don't delay seeking immediate medical attention
+- If choking and alone, try the self-Heimlich maneuver
+
+**This chatbot is for information only and cannot replace emergency medical care.**
+
+If this is not an immediate emergency but you're concerned about serious symptoms, please use the triage form to get properly assessed.
+
+Is there anything else I can help explain about emergency procedures?`;
+            }
+
+            getSymptomResponse(msg) {
+                if (msg.includes('pain') || msg.includes('hurt') || msg.includes('ache')) {
+                    return this.responses.symptoms.pain;
+                }
+                if (msg.includes('fever') || msg.includes('temperature') || msg.includes('hot')) {
+                    return this.responses.symptoms.fever;
+                }
+                if (msg.includes('breath') || msg.includes('breathing') || msg.includes('air')) {
+                    return this.responses.symptoms.breathing;
+                }
+                if (msg.includes('chest')) {
+                    return this.responses.symptoms.chest;
+                }
+                return null;
+            }
+
+            getProcessResponse(msg) {
+                if (msg.includes('triage') || msg.includes('priority') || (msg.includes('how') && msg.includes('work'))) {
+                    return this.responses.triageProcess;
+                }
+                if (msg.includes('emergency') || msg.includes('urgent') || msg.includes('serious') || msg.includes('911')) {
+                    return this.responses.emergencySigns;
+                }
+                if (msg.includes('wait') || msg.includes('time') || msg.includes('long')) {
+                    return this.responses.waitTimes;
+                }
+                if (msg.includes('prepare') || msg.includes('bring') || msg.includes('need')) {
+                    return this.responses.preparation;
+                }
+                return null;
+            }
+
+            getContextualResponse(msg) {
+                const context = this.conversationContext.join(' ');
+                
+                if (msg.includes('more') || msg.includes('tell me more') || msg.includes('explain')) {
+                    if (context.includes('pain')) {
+                        return "Would you like more specific information about a type of pain? I can explain about headaches, chest pain, abdominal pain, or other specific pain types.";
+                    }
+                    if (context.includes('emergency')) {
+                        return "I can provide more details about specific emergency signs, or explain what to do in different emergency situations. What would be most helpful?";
+                    }
+                }
+                
+                return null;
+            }
+
+            getDefaultResponse() {
+                return `I can help you with:
+
+🏥 **Medical Information**:
+• Understanding the triage process
+• Identifying emergency warning signs  
+• Symptom assessment guidance
+• Wait time expectations
+
+🩺 **Specific Topics**:
+• Pain level assessment
+• Fever and temperature guidelines
+• Breathing difficulty evaluation
+• Chest pain evaluation
+
+📋 **Practical Help**:
+• What to prepare for your visit
+• Understanding priority levels
+• Emergency procedures
+
+What specific information would you like? You can ask about symptoms, procedures, or any medical concerns.`;
+            }
+
+            async generateResponse(message) {
+                // Simulate realistic AI response time
+                const delay = 800 + Math.random() * 2200;
+                
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const response = this.analyzeMessage(message);
+                        resolve(response);
+                    }, delay);
+                });
+            }
+        }
+
+        // Initialize enhanced systems
+        const triageSystem = new AdvancedFuzzyTriageSystem();
+        const chatbot = new EnhancedMedicalChatbot();
+
+        // Enhanced UI interaction functions
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addMessage(message, 'user');
+            input.value = '';
+            adjustTextareaHeight(input);
+            
+            showTypingIndicator();
+            
+            chatbot.generateResponse(message).then(response => {
+                hideTypingIndicator();
+                addMessage(response, 'bot');
+            });
+        }
+
+        function sendQuickMessage(message) {
+            addMessage(message, 'user');
+            showTypingIndicator();
+            
+            chatbot.generateResponse(message).then(response => {
+                hideTypingIndicator();
+                addMessage(response, 'bot');
+            });
+        }
+
+        function addMessage(message, sender) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender} fade-in`;
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = `message-avatar ${sender}-avatar`;
+            avatarDiv.textContent = sender === 'bot' ? '🤖' : '👤';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.style.whiteSpace = 'pre-line';
+            
+            // Enhanced message formatting for bot responses
+            if (sender === 'bot' && message.includes('**')) {
+                contentDiv.innerHTML = message
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+            } else {
+                contentDiv.textContent = message;
+            }
+            
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'flex';
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').style.display = 'none';
+        }
+
+        function handleChatKeyPress(event) {
+            const textarea = event.target;
+            
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+            
+            // Auto-resize textarea
+            adjustTextareaHeight(textarea);
+        }
+
+        function adjustTextareaHeight(textarea) {
+            textarea.style.height = 'auto';
+            const newHeight = Math.min(textarea.scrollHeight, 120);
+            textarea.style.height = newHeight + 'px';
+        }
+
+        // Enhanced form submission with validation
+        document.getElementById('triageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Form validation
+            const requiredFields = ['patientName', 'patientAge', 'patientGender'];
+            const missingFields = requiredFields.filter(field => 
+                !document.getElementById(field).value.trim()
+            );
+            
+            if (missingFields.length > 0) {
+                alert('Please fill in all required patient information fields.');
+                return;
+            }
+            
+            // Add loading state
+            const submitBtn = this.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '🔄 Analyzing...';
+            submitBtn.classList.add('loading');
+            
+            // Simulate processing time for better UX
+            setTimeout(() => {
+                const patientData = {
+                    name: document.getElementById('patientName').value.trim(),
+                    age: parseInt(document.getElementById('patientAge').value),
+                    gender: document.getElementById('patientGender').value,
+                    additionalSymptoms: document.getElementById('additionalSymptoms').value.trim()
+                };
+
+                const symptoms = {
+                    painLevel: document.getElementById('painLevel').value,
+                    breathingDifficulty: document.getElementById('breathingDifficulty').value,
+                    consciousnessLevel: document.getElementById('consciousnessLevel').value,
+                    chestPain: document.getElementById('chestPain').value,
+                    heartRate: document.getElementById('heartRate').value,
+                    headache: document.getElementById('headache').value,
+                    confusion: document.getElementById('confusion').value,
+                    bleeding: document.getElementById('bleeding').value,
+                    fever: document.getElementById('fever').value
+                };
+
+                const patient = triageSystem.addPatient(patientData, symptoms);
+                updateQueueDisplay();
+                
+                // Enhanced chatbot notification
+                const triageMessage = `**Patient Assessment Complete**
+
+Patient: ${patient.name}
+Priority: ${patient.priorityLabel}
+Urgency Score: ${patient.urgencyScore}/100
+Estimated Wait: ${patient.estimatedWaitTime} minutes
+
+${patient.riskFactors.length > 0 ? `Risk Factors: ${patient.riskFactors.join(', ')}` : ''}
+
+${patient.priority === 1 ? '🚨 This patient requires immediate medical attention!' : 'Patient added to queue successfully.'}`;
+                
+                addMessage(triageMessage, 'bot');
+                
+                // Reset form and button
+                this.reset();
+                submitBtn.textContent = originalText;
+                submitBtn.classList.remove('loading');
+                
+                // Show alert for critical patients
+                if (patient.priority === 1) {
+                    showCriticalAlert();
+                }
+            }, 1500);
+        });
+
+        function updateQueueDisplay() {
+            const patients = triageSystem.getPatients();
+            const stats = triageSystem.getDetailedStatistics();
+            const queueContainer = document.getElementById('queueContainer');
+            
+            // Update statistics with animation
+            animateCounterUpdate('totalPatients', stats.total);
+            animateCounterUpdate('criticalPatients', stats.critical);
+            animateCounterUpdate('avgWaitTime', stats.avgWait);
+            
+            if (patients.length === 0) {
+                queueContainer.innerHTML = `
+                    <div class="empty-queue">
+                        <div style="font-size: 48px; margin-bottom: 16px;">🏥</div>
+                        <div style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">Queue is empty</div>
+                        <div style="font-size: 14px; color: #6b7280;">Add patients using the triage assessment form</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            queueContainer.innerHTML = patients.map((patient, index) => `
+                <div class="queue-item priority-${patient.priority} fade-in" style="animation-delay: ${index * 0.1}s">
+                    <div class="queue-header">
+                        <div class="patient-name">${patient.name}</div>
+                        <div class="queue-position">#${index + 1}</div>
+                    </div>
+                    
+                    <div class="patient-info">
+                        <div><strong>Age:</strong> ${patient.age}</div>
+                        <div><strong>Gender:</strong> ${patient.gender}</div>
+                        <div><strong>Score:</strong> ${patient.urgencyScore}/100</div>
+                        <div><strong>Wait:</strong> ${patient.estimatedWaitTime} min</div>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <span class="priority-badge priority-${patient.priority}">${patient.priorityLabel}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function animateCounterUpdate(elementId, newValue) {
+            const element = document.getElementById(elementId);
+            const oldValue = parseInt(element.textContent, 10);
+            const duration = 500;
+            const startTime = performance.now();
+
+            function updateCounter(timestamp) {
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                element.textContent = Math.floor(oldValue + (newValue - oldValue) * progress);
+
+                if (progress < 1) {
+                    requestAnimationFrame(updateCounter);
+                }
+            }
+
+            requestAnimationFrame(updateCounter);
+        }
+    </script>
+</body>
+</html>
