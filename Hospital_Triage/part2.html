@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced AI Hospital Triage System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+            overflow-x: hidden;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 400px;
+            grid-template-rows: 70px 1fr;
+            grid-template-areas: 
+                "sidebar header analytics"
+                "sidebar main analytics";
+            height: 100vh;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        /* Header */
+        .header {
+            grid-area: header;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicators {
+            margin-left: auto;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.active { background: #2ecc71; }
+        .status-dot.warning { background: #f39c12; }
+        .status-dot.critical { background: #e74c3c; }
+
+        /* Sidebar */
+        .sidebar {
+            grid-area: sidebar;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            color: #34495e;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            grid-area: main;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+        }
+
+        .view-content {
+            display: none;
+        }
+
+        .view-content.active {
+            display: block;
+        }
+
+        /* Analytics Panel */
+        .analytics {
+            grid-area: analytics;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .analytics-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        /* Enhanced Forms */
+        .form-section {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+
+        .form-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #34495e;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-group input.invalid,
+        .form-group select.invalid {
+            border-color: #e74c3c;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        /* Smart Symptom Checker */
+        .symptom-smart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .symptom-category {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .symptom-category:hover {
+            border-color: #3498db;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .symptom-category h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+
+        .symptom-slider-container {
+            margin-bottom: 15px;
+        }
+
+        .symptom-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e1e8ed;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .symptom-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .severity-display {
+            background: linear-gradient(135deg, #ecf0f1, #d5dbdb);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        /* Voice Input */
+        .voice-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .voice-btn:hover {
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .voice-btn.active {
+            animation: voice-pulse 1s infinite;
+        }
+
+        /* Live Indicator */
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #2ecc71;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #2ecc71;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        /* Button Styles */
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn.emergency {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        /* Queue Management */
+        .queue-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ecf0f1;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .queue-item:hover {
+            background: #f8f9fa;
+        }
+
+        .queue-item:last-child {
+            border-bottom: none;
+        }
+
+        .queue-priority {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .priority-1 { background: #e74c3c; }
+        .priority-2 { background: #f39c12; }
+        .priority-3 { background: #f1c40f; }
+        .priority-4 { background: #2ecc71; }
+        .priority-5 { background: #3498db; }
+
+        .queue-info {
+            flex: 1;
+        }
+
+        .queue-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .queue-symptoms {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 2px;
+        }
+
+        .queue-time {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        /* Triage Result */
+        .triage-result {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .triage-priority {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .triage-score {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .triage-recommendations {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .triage-recommendations h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .triage-recommendations ul {
+            list-style-position: inside;
+            color: #34495e;
+        }
+
+        .triage-recommendations li {
+            margin-bottom: 5px;
+        }
+
+        /* Settings View */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-card h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider-toggle {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider-toggle:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider-toggle {
+            background-color: #3498db;
+        }
+
+        input:checked + .slider-toggle:before {
+            transform: translateX(26px);
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left-color: #2ecc71;
+        }
+
+        .notification.error {
+            border-left-color: #e74c3c;
+        }
+
+        .notification.warning {
+            border-left-color: #f39c12;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes voice-pulse {
+            0%, 100% { background: linear-gradient(135deg, #3498db, #2980b9); }
+            50% { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                grid-template-areas: 
+                    "header"
+                    "main"
+                    "analytics";
+            }
+            
+            .sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .symptom-smart-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏥 Advanced AI Triage System</h1>
+            <div class="status-indicators">
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    <span>Live</span>
+                </div>
+                <div class="status-dot active" title="System Online"></div>
+                <div class="status-dot warning" id="warningStatus" title="Moderate Load"></div>
+                <div class="status-dot critical" id="criticalStatus" title="Critical Patients" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <h3>🔧 System Controls</h3>
+            <div class="nav-item active" data-view="triage">
+                📝 Patient Triage
+            </div>
+            <div class="nav-item" data-view="queue">
+                📋 Queue Management
+            </div>
+            <div class="nav-item" data-view="analytics">
+                📊 Analytics Dashboard
+            </div>
+            <div class="nav-item" data-view="settings">
+                ⚙️ System Settings
+            </div>
+            
+            <h3 style="margin-top: 30px;">🚨 Quick Actions</h3>
+            <div class="nav-item emergency" onclick="addEmergencyPatient()" style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white;">
+                🚑 Emergency Input
+            </div>
+            <div class="nav-item" onclick="exportReport()">
+                📄 Export Report
+            </div>
+            <div class="nav-item" onclick="resetSystem()">
+                🔄 Reset Queue
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Triage View -->
+            <div id="triageView" class="view-content active">
+                <form id="advancedTriageForm">
+                    <!-- Patient Demographics -->
+                    <div class="form-section">
+                        <h3>👤 Patient Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Full Name *</label>
+                                <div style="position: relative;">
+                                    <input type="text" id="patientName" required placeholder="Enter patient name">
+                                    <button type="button" class="voice-btn" onclick="startVoiceInput('patientName')" title="Voice Input">🎤</button>
+                                </div>
+                                <div class="error-message" id="patientNameError">Please enter a valid name</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Age *</label>
+                                <input type="number" id="patientAge" min="0" max="120" required>
+                                <div class="error-message" id="patientAgeError">Please enter a valid age (0-120)</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Gender *</label>
+                                <select id="patientGender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <div class="error-message" id="patientGenderError">Please select a gender</div>
+                            </div>
+                            <div class="form-group">
+                                <label>Patient ID/MRN</label>
+                                <input type="text" id="patientId" placeholder="Medical Record Number">
+                            </div>
+                            <div class="form-group">
+                                <label>Insurance Type</label>
+                                <select id="insuranceType">
+                                    <option value="private">Private</option>
+                                    <option value="medicare">Medicare</option>
+                                    <option value="medicaid">Medicaid</option>
+                                    <option value="uninsured">Uninsured</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Emergency Contact</label>
+                                <input type="tel" id="emergencyContact" placeholder="Phone number">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Smart Symptom Assessment -->
+                    <div class="form-section">
+                        <h3>🩺 AI-Powered Symptom Assessment</h3>
+                        <div class="symptom-smart-grid">
+                            <!-- Vital Signs -->
+                            <div class="symptom-category">
+                                <h4>💗 Vital Signs</h4>
+                                
+                                <div class="symptom-slider-container">
+                                    <label>Pain Level</label>
+                                    <input type="range" class="symptom-slider" id="painLevel" min="0" max="10" value="0" oninput="updateSeverityDisplay(this, 'painDisplay')">
+                                    <div class="slider-labels">
+                                        <span>No Pain</span>
+                                        <span>Unbearable</span>
+                                    </div>
+                                    <div id="nauseaDisplay" class="severity-display">No Nausea (0/10)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div style="text-align: center; margin-top: 30px;">
+                        <button type="submit" class="btn">Process Triage Assessment</button>
+                    </div>
+                </form>
+
+                <!-- Triage Result (Initially Hidden) -->
+                <div id="triageResult" class="triage-result" style="display: none;">
+                    <div class="triage-priority" id="triagePriorityText">Priority Level: Urgent</div>
+                    <div class="triage-score" id="triageScoreText">Triage Score: 85/100</div>
+                    <div class="triage-recommendations">
+                        <h4>🎯 Recommended Actions:</h4>
+                        <ul id="triageRecommendationsList">
+                            <li>Immediate medical attention required</li>
+                            <li>Monitor vital signs continuously</li>
+                            <li>Prepare for emergency procedures</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Queue Management View -->
+            <div id="queueView" class="view-content">
+                <h2 style="margin-bottom: 20px;">📋 Patient Queue Management</h2>
+                <div class="form-section">
+                    <h3>🔍 Queue Filters</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Filter by Priority</label>
+                            <select id="priorityFilter" onchange="filterQueue()">
+                                <option value="">All Priorities</option>
+                                <option value="1">Priority 1 (Critical)</option>
+                                <option value="2">Priority 2 (Urgent)</option>
+                                <option value="3">Priority 3 (Less Urgent)</option>
+                                <option value="4">Priority 4 (Standard)</option>
+                                <option value="5">Priority 5 (Non-urgent)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Search Patient</label>
+                            <input type="text" id="searchPatient" placeholder="Search by name or ID" oninput="filterQueue()">
+                        </div>
+                    </div>
+                </div>
+                <div class="queue-list" id="queueList">
+                    <!-- Queue items will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Analytics Dashboard View -->
+            <div id="analyticsView" class="view-content">
+                <h2 style="margin-bottom: 20px;">📊 Analytics Dashboard</h2>
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalPatientsToday">127</div>
+                        <div class="stat-label">Total Patients Today</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="averageWaitTime">32</div>
+                        <div class="stat-label">Avg Wait Time (min)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="criticalCases">8</div>
+                        <div class="stat-label">Critical Cases</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="bedOccupancy">78</div>
+                        <div class="stat-label">Bed Occupancy (%)</div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>📈 Performance Metrics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">94%</div>
+                            <div class="stat-label">Triage Accuracy</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">2.3</div>
+                            <div class="stat-label">Avg Processing Time (min)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">15</div>
+                            <div class="stat-label">Staff on Duty</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">99.8%</div>
+                            <div class="stat-label">System Uptime</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settingsView" class="view-content">
+                <h2 style="margin-bottom: 20px;">⚙️ System Settings</h2>
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h4>🔊 Notification Settings</h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span>Sound Alerts</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="soundAlerts" checked>
+                                <span class="slider-toggle"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span>Critical Patient Alerts</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="criticalAlerts" checked>
+                                <span class="slider-toggle"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Queue Status Updates</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="queueUpdates" checked>
+                                <span class="slider-toggle"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h4>🎯 Triage Parameters</h4>
+                        <div class="form-group">
+                            <label>Critical Threshold</label>
+                            <input type="range" min="70" max="100" value="85" id="criticalThreshold" oninput="updateThresholdDisplay(this, 'criticalThresholdDisplay')">
+                            <div id="criticalThresholdDisplay" style="margin-top: 5px; color: #7f8c8d; font-size: 12px;">85/100</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Urgent Threshold</label>
+                            <input type="range" min="50" max="85" value="70" id="urgentThreshold" oninput="updateThresholdDisplay(this, 'urgentThresholdDisplay')">
+                            <div id="urgentThresholdDisplay" style="margin-top: 5px; color: #7f8c8d; font-size: 12px;">70/100</div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h4>🏥 System Configuration</h4>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span>Auto-Refresh Queue</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoRefresh" checked>
+                                <span class="slider-toggle"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span>Voice Input</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="voiceInput" checked>
+                                <span class="slider-toggle"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Dark Mode</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="darkMode">
+                                <span class="slider-toggle"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn" onclick="saveSettings()">💾 Save Settings</button>
+                    <button class="btn" onclick="resetSettings()" style="background: linear-gradient(135deg, #95a5a6, #7f8c8d); margin-left: 15px;">🔄 Reset to Default</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Panel -->
+        <div class="analytics">
+            <div class="analytics-card">
+                <h3>📊 Live Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="currentWaiting">12</div>
+                        <div class="stat-label">Waiting</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="currentCritical">3</div>
+                        <div class="stat-label">Critical</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="avgWaitDisplay">45</div>
+                        <div class="stat-label">Min Avg Wait</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="staffAvailable">8</div>
+                        <div class="stat-label">Staff Available</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analytics-card">
+                <h3>⚡ Recent Activity</h3>
+                <div id="recentActivity">
+                    <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 10px;">
+                        <strong>11:45 AM</strong> - Priority 1 patient admitted
+                    </div>
+                    <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 10px;">
+                        <strong>11:42 AM</strong> - Queue updated: 12 patients
+                    </div>
+                    <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 10px;">
+                        <strong>11:38 AM</strong> - New patient triaged
+                    </div>
+                    <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 10px;">
+                        <strong>11:35 AM</strong> - Critical alert resolved
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification System -->
+    <div id="notification" class="notification">
+        <div id="notificationMessage">System notification</div>
+    </div>
+
+    <script>
+        // Global variables
+        let patients = [];
+        let isVoiceRecording = false;
+        let currentPatientId = 1000;
+
+        // Initialize system
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSampleData();
+            updateQueue();
+            updateLiveStats();
+            setupNavigation();
+            setupFormValidation();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(updateLiveStats, 30000);
+        });
+
+        // Navigation system
+        function setupNavigation() {
+            const navItems = document.querySelectorAll('.nav-item[data-view]');
+            const viewContents = document.querySelectorAll('.view-content');
+
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const targetView = this.getAttribute('data-view');
+                    
+                    // Update active nav item
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show target view
+                    viewContents.forEach(view => view.classList.remove('active'));
+                    document.getElementById(targetView + 'View').classList.add('active');
+                });
+            });
+        }
+
+        // Form validation system
+        function setupFormValidation() {
+            const form = document.getElementById('advancedTriageForm');
+            const inputs = form.querySelectorAll('input[required], select[required]');
+
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateField(this);
+                });
+
+                input.addEventListener('input', function() {
+                    if (this.classList.contains('invalid')) {
+                        validateField(this);
+                    }
+                });
+            });
+        }
+
+        function validateField(field) {
+            const errorElement = document.getElementById(field.id + 'Error');
+            let isValid = true;
+            
+            if (field.hasAttribute('required') && !field.value.trim()) {
+                isValid = false;
+            }
+            
+            if (field.type === 'number') {
+                const min = parseFloat(field.getAttribute('min'));
+                const max = parseFloat(field.getAttribute('max'));
+                const value = parseFloat(field.value);
+                
+                if (field.value && (isNaN(value) || value < min || value > max)) {
+                    isValid = false;
+                }
+            }
+
+            if (isValid) {
+                field.classList.remove('invalid');
+                if (errorElement) errorElement.style.display = 'none';
+            } else {
+                field.classList.add('invalid');
+                if (errorElement) errorElement.style.display = 'block';
+            }
+
+            return isValid;
+        }
+
+        // Symptom severity display
+        function updateSeverityDisplay(slider, displayId) {
+            const value = parseInt(slider.value);
+            const display = document.getElementById(displayId);
+            const severityLevels = ['None', 'Mild', 'Moderate', 'Severe', 'Extreme'];
+            const level = value <= 2 ? severityLevels[0] : 
+                         value <= 4 ? severityLevels[1] : 
+                         value <= 6 ? severityLevels[2] : 
+                         value <= 8 ? severityLevels[3] : severityLevels[4];
+            
+            display.textContent = `${level} (${value}/10)`;
+            
+            // Color coding based on severity
+            if (value <= 3) {
+                display.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
+                display.style.color = 'white';
+            } else if (value <= 6) {
+                display.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+                display.style.color = 'white';
+            } else {
+                display.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+                display.style.color = 'white';
+            }
+        }
+
+        function updateThresholdDisplay(slider, displayId) {
+            const display = document.getElementById(displayId);
+            display.textContent = `${slider.value}/100`;
+        }
+
+        // Voice input system
+        function startVoiceInput(fieldId) {
+            const button = document.querySelector(`[onclick="startVoiceInput('${fieldId}')"]`);
+            const field = document.getElementById(fieldId);
+            
+            if (isVoiceRecording) {
+                // Stop recording
+                isVoiceRecording = false;
+                button.classList.remove('active');
+                button.textContent = '🎤';
+                
+                // Simulate voice input result
+                setTimeout(() => {
+                    if (fieldId === 'patientName') {
+                        field.value = 'John Doe (Voice Input)';
+                    }
+                    showNotification('Voice input completed', 'success');
+                }, 1000);
+                
+            } else {
+                // Start recording
+                isVoiceRecording = true;
+                button.classList.add('active');
+                button.textContent = '🔴';
+                showNotification('Voice recording started...', 'info');
+            }
+        }
+
+        // Triage calculation system
+        function calculateTriageScore(patientData) {
+            let score = 0;
+            let priority = 5;
+            let recommendations = [];
+
+            // Critical symptoms scoring
+            const criticalFactors = {
+                consciousnessLevel: patientData.consciousnessLevel || 0,
+                breathingDifficulty: patientData.breathingDifficulty || 0,
+                chestPain: patientData.chestPain || 0,
+                bleeding: patientData.bleeding || 0,
+                painLevel: patientData.painLevel || 0
+            };
+
+            // Calculate base score
+            Object.values(criticalFactors).forEach(value => {
+                score += parseInt(value) * 8;
+            });
+
+            // Age factor
+            const age = parseInt(patientData.age) || 0;
+            if (age > 65 || age < 5) {
+                score += 15;
+                recommendations.push('Age-related priority consideration applied');
+            }
+
+            // Vital signs assessment
+            const heartRate = parseInt(patientData.heartRate) || 0;
+            const temperature = parseFloat(patientData.temperature) || 0;
+            
+            if (heartRate > 100 || heartRate < 60) {
+                score += 10;
+                recommendations.push('Monitor heart rate closely');
+            }
+            
+            if (temperature > 101.5 || temperature < 96) {
+                score += 12;
+                recommendations.push('Temperature monitoring required');
+            }
+
+            // Determine priority level
+            if (score >= 80) {
+                priority = 1;
+                recommendations.unshift('IMMEDIATE medical attention required');
+                recommendations.push('Prepare for emergency intervention');
+            } else if (score >= 60) {
+                priority = 2;
+                recommendations.unshift('Urgent care needed within 15 minutes');
+            } else if (score >= 40) {
+                priority = 3;
+                recommendations.unshift('Semi-urgent - treat within 30 minutes');
+            } else if (score >= 20) {
+                priority = 4;
+                recommendations.unshift('Standard priority - treat within 1 hour');
+            } else {
+                priority = 5;
+                recommendations.unshift('Non-urgent - can wait for available resources');
+            }
+
+            return { score: Math.min(score, 100), priority, recommendations };
+        }
+
+        // Form submission handler
+        document.getElementById('advancedTriageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate all required fields
+            const requiredFields = this.querySelectorAll('input[required], select[required]');
+            let allValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!validateField(field)) {
+                    allValid = false;
+                }
+            });
+
+            if (!allValid) {
+                showNotification('Please fill in all required fields correctly', 'error');
+                return;
+            }
+
+            // Collect patient data
+            const patientData = {
+                id: currentPatientId++,
+                name: document.getElementById('patientName').value,
+                age: document.getElementById('patientAge').value,
+                gender: document.getElementById('patientGender').value,
+                patientId: document.getElementById('patientId').value,
+                insuranceType: document.getElementById('insuranceType').value,
+                emergencyContact: document.getElementById('emergencyContact').value,
+                painLevel: document.getElementById('painLevel').value,
+                breathingDifficulty: document.getElementById('breathingDifficulty').value,
+                consciousnessLevel: document.getElementById('consciousnessLevel').value,
+                headache: document.getElementById('headache').value,
+                confusion: document.getElementById('confusion').value,
+                chestPain: document.getElementById('chestPain').value,
+                palpitations: document.getElementById('palpitations').value,
+                bleeding: document.getElementById('bleeding').value,
+                nausea: document.getElementById('nausea').value,
+                heartRate: document.getElementById('heartRate').value,
+                bloodPressure: document.getElementById('bloodPressure').value,
+                temperature: document.getElementById('temperature').value,
+                timestamp: new Date().toLocaleTimeString()
+            };
+
+            // Calculate triage score
+            const triage = calculateTriageScore(patientData);
+            patientData.triageScore = triage.score;
+            patientData.priority = triage.priority;
+            patientData.recommendations = triage.recommendations;
+
+            // Add patient to queue
+            patients.unshift(patientData);
+
+            // Display triage result
+            displayTriageResult(triage);
+
+            // Update queue and stats
+            updateQueue();
+            updateLiveStats();
+            
+            // Show success notification
+            showNotification(`Patient ${patientData.name} successfully triaged with Priority ${triage.priority}`, 'success');
+            
+            // Add to recent activity
+            addToRecentActivity(`New patient triaged: ${patientData.name} (Priority ${triage.priority})`);
+        });
+
+        function displayTriageResult(triage) {
+            const resultDiv = document.getElementById('triageResult');
+            const priorityText = document.getElementById('triagePriorityText');
+            const scoreText = document.getElementById('triageScoreText');
+            const recommendationsList = document.getElementById('triageRecommendationsList');
+
+            const priorityLabels = {
+                1: 'Critical - Immediate',
+                2: 'Urgent',
+                3: 'Less Urgent',
+                4: 'Standard',
+                5: 'Non-urgent'
+            };
+
+            const priorityColors = {
+                1: '#e74c3c',
+                2: '#f39c12',
+                3: '#f1c40f',
+                4: '#2ecc71',
+                5: '#3498db'
+            };
+
+            priorityText.textContent = `Priority Level: ${priorityLabels[triage.priority]}`;
+            priorityText.style.color = priorityColors[triage.priority];
+            
+            scoreText.textContent = `Triage Score: ${triage.score}/100`;
+            
+            recommendationsList.innerHTML = '';
+            triage.recommendations.forEach(rec => {
+                const li = document.createElement('li');
+                li.textContent = rec;
+                recommendationsList.appendChild(li);
+            });
+
+            resultDiv.style.display = 'block';
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Queue management
+        function updateQueue() {
+            const queueList = document.getElementById('queueList');
+            const filteredPatients = filterPatients();
+            
+            queueList.innerHTML = '';
+            
+            filteredPatients.forEach(patient => {
+                const queueItem = document.createElement('div');
+                queueItem.className = 'queue-item';
+                queueItem.innerHTML = `
+                    <div class="queue-priority priority-${patient.priority}">${patient.priority}</div>
+                    <div class="queue-info">
+                        <div class="queue-name">${patient.name} ${patient.patientId ? '(#' + patient.patientId + ')' : ''}</div>
+                        <div class="queue-symptoms">Score: ${patient.triageScore}/100 | Age: ${patient.age} | ${patient.gender}</div>
+                    </div>
+                    <div class="queue-time">${patient.timestamp}</div>
+                `;
+                queueList.appendChild(queueItem);
+            });
+        }
+
+        function filterPatients() {
+            const priorityFilter = document.getElementById('priorityFilter')?.value;
+            const searchFilter = document.getElementById('searchPatient')?.value.toLowerCase();
+            
+            return patients.filter(patient => {
+                const matchesPriority = !priorityFilter || patient.priority.toString() === priorityFilter;
+                const matchesSearch = !searchFilter || 
+                    patient.name.toLowerCase().includes(searchFilter) ||
+                    (patient.patientId && patient.patientId.toLowerCase().includes(searchFilter));
+                
+                return matchesPriority && matchesSearch;
+            });
+        }
+
+        function filterQueue() {
+            updateQueue();
+        }
+
+        // Live statistics updates
+        function updateLiveStats() {
+            const currentWaiting = patients.length;
+            const criticalPatients = patients.filter(p => p.priority <= 2).length;
+            const avgWait = Math.floor(Math.random() * 20) + 30; // Simulated
+            const staffAvailable = Math.floor(Math.random() * 5) + 6; // Simulated
+
+            document.getElementById('currentWaiting').textContent = currentWaiting;
+            document.getElementById('currentCritical').textContent = criticalPatients;
+            document.getElementById('avgWaitDisplay').textContent = avgWait;
+            document.getElementById('staffAvailable').textContent = staffAvailable;
+
+            // Update status indicators
+            const criticalStatus = document.getElementById('criticalStatus');
+            const warningStatus = document.getElementById('warningStatus');
+            
+            if (criticalPatients > 0) {
+                criticalStatus.style.display = 'block';
+            } else {
+                criticalStatus.style.display = 'none';
+            }
+            
+            if (currentWaiting > 10) {
+                warningStatus.style.display = 'block';
+            } else {
+                warningStatus.style.display = 'none';
+            }
+        }
+
+        // Sample data loader
+        function loadSampleData() {
+            const samplePatients = [
+                {
+                    id: 1001,
+                    name: 'Sarah Johnson',
+                    age: 45,
+                    gender: 'female',
+                    priority: 2,
+                    triageScore: 78,
+                    timestamp: '10:30 AM',
+                    patientId: 'MRN001'
+                },
+                {
+                    id: 1002,
+                    name: 'Michael Chen',
+                    age: 32,
+                    gender: 'male',
+                    priority: 3,
+                    triageScore: 45,
+                    timestamp: '10:45 AM',
+                    patientId: 'MRN002'
+                },
+                {
+                    id: 1003,
+                    name: 'Emily Rodriguez',
+                    age: 67,
+                    gender: 'female',
+                    priority: 1,
+                    triageScore: 92,
+                    timestamp: '11:15 AM',
+                    patientId: 'MRN003'
+                }
+            ];
+            
+            patients = samplePatients;
+        }
+
+        // Quick actions
+        function addEmergencyPatient() {
+            const name = prompt('Enter emergency patient name:');
+            if (name) {
+                const emergencyPatient = {
+                    id: currentPatientId++,
+                    name: name,
+                    age: Math.floor(Math.random() * 60) + 20,
+                    gender: 'unknown',
+                    priority: 1,
+                    triageScore: Math.floor(Math.random() * 20) + 80,
+                    timestamp: new Date().toLocaleTimeString(),
+                    patientId: 'EMRG' + Math.floor(Math.random() * 1000)
+                };
+                
+                patients.unshift(emergencyPatient);
+                updateQueue();
+                updateLiveStats();
+                showNotification(`Emergency patient ${name} added to queue`, 'warning');
+                addToRecentActivity(`Emergency patient added: ${name}`);
+            }
+        }
+
+        function exportReport() {
+            const reportData = {
+                timestamp: new Date().toISOString(),
+                totalPatients: patients.length,
+                criticalPatients: patients.filter(p => p.priority <= 2).length,
+                patientList: patients.map(p => ({
+                    name: p.name,
+                    priority: p.priority,
+                    score: p.triageScore,
+                    timestamp: p.timestamp
+                }))
+            };
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(reportData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `triage_report_${new Date().toISOString().split('T')[0]}.json`);
+            downloadAnchor.click();
+            
+            showNotification('Report exported successfully', 'success');
+        }
+
+        function resetSystem() {
+            if (confirm('Are you sure you want to reset the entire patient queue? This action cannot be undone.')) {
+                patients = [];
+                updateQueue();
+                updateLiveStats();
+                
+                // Clear form
+                document.getElementById('advancedTriageForm').reset();
+                
+                // Reset all sliders
+                const sliders = document.querySelectorAll('.symptom-slider');
+                sliders.forEach(slider => {
+                    slider.value = 0;
+                    const displayId = slider.id.replace(/([A-Z])/g, (match, letter) => 
+                        match.charAt(0) + 'Display'
+                    ).replace('Level', '').replace('Difficulty', '');
+                    updateSeverityDisplay(slider, displayId);
+                });
+                
+                // Hide triage result
+                document.getElementById('triageResult').style.display = 'none';
+                
+                showNotification('System reset completed', 'success');
+                addToRecentActivity('System queue reset');
+            }
+        }
+
+        // Settings management
+        function saveSettings() {
+            const settings = {
+                soundAlerts: document.getElementById('soundAlerts').checked,
+                criticalAlerts: document.getElementById('criticalAlerts').checked,
+                queueUpdates: document.getElementById('queueUpdates').checked,
+                criticalThreshold: document.getElementById('criticalThreshold').value,
+                urgentThreshold: document.getElementById('urgentThreshold').value,
+                autoRefresh: document.getElementById('autoRefresh').checked,
+                voiceInput: document.getElementById('voiceInput').checked,
+                darkMode: document.getElementById('darkMode').checked
+            };
+            
+            // Simulate saving settings
+            showNotification('Settings saved successfully', 'success');
+            addToRecentActivity('System settings updated');
+        }
+
+        function resetSettings() {
+            if (confirm('Reset all settings to default values?')) {
+                // Reset all toggles and sliders to default
+                document.getElementById('soundAlerts').checked = true;
+                document.getElementById('criticalAlerts').checked = true;
+                document.getElementById('queueUpdates').checked = true;
+                document.getElementById('criticalThreshold').value = 85;
+                document.getElementById('urgentThreshold').value = 70;
+                document.getElementById('autoRefresh').checked = true;
+                document.getElementById('voiceInput').checked = true;
+                document.getElementById('darkMode').checked = false;
+                
+                // Update displays
+                updateThresholdDisplay(document.getElementById('criticalThreshold'), 'criticalThresholdDisplay');
+                updateThresholdDisplay(document.getElementById('urgentThreshold'), 'urgentThresholdDisplay');
+                
+                showNotification('Settings reset to default values', 'success');
+            }
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const messageElement = document.getElementById('notificationMessage');
+            
+            messageElement.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Recent activity tracker
+        function addToRecentActivity(activity) {
+            const activityContainer = document.getElementById('recentActivity');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const activityItem = document.createElement('div');
+            activityItem.style.fontSize = '12px';
+            activityItem.style.color = '#7f8c8d';
+            activityItem.style.marginBottom = '10px';
+            activityItem.innerHTML = `<strong>${timestamp}</strong> - ${activity}`;
+            
+            activityContainer.insertBefore(activityItem, activityContainer.firstChild);
+            
+            // Keep only the last 10 activities
+            while (activityContainer.children.length > 10) {
+                activityContainer.removeChild(activityContainer.lastChild);
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        document.querySelector('[data-view="triage"]').click();
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        document.querySelector('[data-view="queue"]').click();
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        document.querySelector('[data-view="analytics"]').click();
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        document.querySelector('[data-view="settings"]').click();
+                        break;
+                    case 'e':
+                        e.preventDefault();
+                        addEmergencyPatient();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        document.getElementById('advancedTriageForm').dispatchEvent(new Event('submit'));
+                        break;
+                }
+            }
+        });
+
+        // Auto-save form data (simulate)
+        function autoSaveFormData() {
+            const formData = new FormData(document.getElementById('advancedTriageForm'));
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            // In a real application, this would save to localStorage or send to server
+            console.log('Auto-saving form data:', data);
+        }
+
+        // Set up auto-save every 30 seconds
+        setInterval(autoSaveFormData, 30000);
+
+        // Initialize tooltips and help system
+        function initializeTooltips() {
+            const tooltipElements = document.querySelectorAll('[title]');
+            tooltipElements.forEach(element => {
+                element.addEventListener('mouseenter', function() {
+                    // Tooltip functionality would be implemented here
+                    console.log('Tooltip:', this.getAttribute('title'));
+                });
+            });
+        }
+
+        // Simulate real-time updates
+        function simulateRealTimeUpdates() {
+            // Randomly update statistics
+            setInterval(() => {
+                const waitingElement = document.getElementById('currentWaiting');
+                const currentValue = parseInt(waitingElement.textContent);
+                const change = Math.floor(Math.random() * 5) - 2; // -2 to +2
+                const newValue = Math.max(0, currentValue + change);
+                waitingElement.textContent = newValue;
+                
+                // Update other stats occasionally
+                if (Math.random() < 0.3) {
+                    const avgWaitElement = document.getElementById('avgWaitDisplay');
+                    const newAvgWait = Math.floor(Math.random() * 30) + 30;
+                    avgWaitElement.textContent = newAvgWait;
+                }
+                
+                if (Math.random() < 0.2) {
+                    const staffElement = document.getElementById('staffAvailable');
+                    const newStaffCount = Math.floor(Math.random() * 8) + 5;
+                    staffElement.textContent = newStaffCount;
+                }
+            }, 45000); // Update every 45 seconds
+        }
+
+        // Initialize advanced features
+        function initializeAdvancedFeatures() {
+            initializeTooltips();
+            simulateRealTimeUpdates();
+            
+            // Show welcome message
+            setTimeout(() => {
+                showNotification('Advanced AI Triage System initialized successfully', 'success');
+            }, 1000);
+            
+            // Add initial activity
+            addToRecentActivity('System startup completed');
+        }
+
+        // Call initialization when DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initializeAdvancedFeatures, 2000);
+        });
+
+        // Error handling for form submission
+        window.addEventListener('error', function(e) {
+            console.error('System error:', e.error);
+            showNotification('A system error occurred. Please try again.', 'error');
+        });
+
+        // Prevent form submission if there are validation errors
+        document.getElementById('advancedTriageForm').addEventListener('submit', function(e) {
+            const invalidFields = this.querySelectorAll('.invalid');
+            if (invalidFields.length > 0) {
+                e.preventDefault();
+                invalidFields[0].focus();
+                showNotification('Please correct the highlighted fields before submitting', 'warning');
+            }
+        });
+
+        // Add drag and drop functionality for queue management
+        function enableQueueDragDrop() {
+            // This would implement drag and drop reordering of queue items
+            // For brevity, just logging the concept
+            console.log('Queue drag and drop functionality would be implemented here');
+        }
+
+        // Performance monitoring
+        function monitorPerformance() {
+            const startTime = performance.now();
+            
+            // Monitor form processing time
+            document.getElementById('advancedTriageForm').addEventListener('submit', function() {
+                const processingTime = performance.now() - startTime;
+                console.log(`Form processing time: ${processingTime.toFixed(2)}ms`);
+                
+                if (processingTime > 1000) {
+                    showNotification('System is running slowly. Please contact IT support.', 'warning');
+                }
+            });
+        }
+
+        // Initialize performance monitoring
+        document.addEventListener('DOMContentLoaded', monitorPerformance);
+
+        // Add print functionality
+        function printReport() {
+            const printWindow = window.open('', '_blank');
+            const reportHTML = `
+                <html>
+                    <head>
+                        <title>Triage Report - ${new Date().toLocaleDateString()}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            .header { text-align: center; margin-bottom: 30px; }
+                            .patient { margin-bottom: 15px; padding: 10px; border: 1px solid #ccc; }
+                            .priority-1 { border-left: 5px solid #e74c3c; }
+                            .priority-2 { border-left: 5px solid #f39c12; }
+                            .priority-3 { border-left: 5px solid #f1c40f; }
+                            .priority-4 { border-left: 5px solid #2ecc71; }
+                            .priority-5 { border-left: 5px solid #3498db; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>Hospital Triage Report</h1>
+                            <p>Generated on: ${new Date().toLocaleString()}</p>
+                            <p>Total Patients: ${patients.length}</p>
+                        </div>
+                        ${patients.map(patient => `
+                            <div class="patient priority-${patient.priority}">
+                                <h3>${patient.name} (Priority ${patient.priority})</h3>
+                                <p>Age: ${patient.age} | Gender: ${patient.gender}</p>
+                                <p>Triage Score: ${patient.triageScore}/100</p>
+                                <p>Time: ${patient.timestamp}</p>
+                            </div>
+                        `).join('')}
+                    </body>
+                </html>
+            `;
+            
+            printWindow.document.write(reportHTML);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Add context menu for advanced actions
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.closest('.queue-item')) {
+                e.preventDefault();
+                // Show custom context menu for queue items
+                console.log('Context menu for queue item would appear here');
+            }
+        });
+
+        // Accessibility enhancements
+        function enhanceAccessibility() {
+            // Add ARIA labels and keyboard navigation
+            const sliders = document.querySelectorAll('.symptom-slider');
+            sliders.forEach(slider => {
+                slider.setAttribute('aria-label', `Symptom severity level from 0 to 10`);
+                
+                slider.addEventListener('keydown', function(e) {
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+                        this.stepDown();
+                        this.dispatchEvent(new Event('input'));
+                    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                        this.stepUp();
+                        this.dispatchEvent(new Event('input'));
+                    }
+                });
+            });
+
+            // Add focus indicators
+            const focusableElements = document.querySelectorAll('input, select, button, .nav-item');
+            focusableElements.forEach(element => {
+                element.addEventListener('focus', function() {
+                    this.style.outline = '2px solid #3498db';
+                    this.style.outlineOffset = '2px';
+                });
+                
+                element.addEventListener('blur', function() {
+                    this.style.outline = 'none';
+                });
+            });
+        }
+
+        // Initialize accessibility features
+        document.addEventListener('DOMContentLoaded', enhanceAccessibility);
+
+        // Final initialization message
+        console.log('Advanced AI Hospital Triage System - All features loaded successfully');
+        console.log('Keyboard shortcuts: Ctrl+1-4 (Navigation), Ctrl+E (Emergency), Ctrl+S (Submit)');
+    </script>
+</body>
+</html>d="painDisplay" class="severity-display">No Pain (0/10)</div>
+                                </div>
+
+                                <div class="symptom-slider-container">
+                                    <label>Breathing Difficulty</label>
+                                    <input type="range" class="symptom-slider" id="breathingDifficulty" min="0" max="10" value="0" oninput="updateSeverityDisplay(this, 'breathingDisplay')">
+                                    <div class="slider-labels">
+                                        <span>Normal</span>
+                                        <span>Severe</span>
+                                    </div>
+                                    <div id="breathingDisplay" class="severity-display">Normal Breathing (0/10)</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Heart Rate (BPM)</label>
+                                    <input type="number" id="heartRate" min="30" max="200" placeholder="e.g., 72">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Blood Pressure</label>
+                                    <input type="text" id="bloodPressure" placeholder="e.g., 120/80">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Temperature (°F)</label>
+                                    <input type="number" id="temperature" min="90" max="110" step="0.1" placeholder="e.g., 98.6">
+                                </div>
+                            </div>
+
+                            <!-- Neurological -->
+                            <div class="symptom-category">
+                                <h4>🧠 Neurological</h4>
+                                
+                                <div class="symptom-slider-container">
+                                    <label>Consciousness Level</label>
+                                    <input type="range" class="symptom-slider" id="consciousnessLevel" min="0" max="10" value="0" oninput="updateSeverityDisplay(this, 'consciousnessDisplay')">
+                                    <div class="slider-labels">
+                                        <span>Alert</span>
+                                        <span>Unconscious</span>
+                                    </div>
+                                    <div id="consciousnessDisplay" class="severity-display">Alert (0/10)</div>
+                                </div>
+
+                                <div class="symptom-slider-container">
+                                    <label>Headache Severity</label>
+                                    <input type="range" class="symptom-slider" id="headache" min="0" max="10" value="0" oninput="updateSeverityDisplay(this, 'headacheDisplay')">
+                                    <div class="slider-labels">
+                                        <span>None</span>
+                                        <span>Severe</span>
+                                    </div>
+                                    <div id="headacheDisplay" class="severity-display">No Headache (0/10)</div>
+                                </div>
+
+                                <div class="symptom-slider-container">
+                                    <label>Confusion/Disorientation</label>
+                                    <input type="range" class="symptom-slider" id="confusion" min="0" max="10" value="0" oninput="updateSeverityDisplay(this, 'confusionDisplay')">
+                                    <div class="slider-labels">
+                                        <span>Clear</span>
+                                        <span>Severe</span>
+                                    </div>
+                                    <div id="confusionDisplay" class="severity-display">Clear Minded (0/10)</div>
+                                </div>
+                            </div>
+
+                            <!-- Cardiovascular -->
+                            <div class="symptom-category">
+                                <h4>💓 Cardiovascular</h4>
+                                
+                                <div class="symptom-slider-container">
+                                    <label>Chest Pain</label>
+                                    <input type="range" class="symptom-slider" id="chestPain" min="0" max="10" value="0" oninput="updateSeverityDisplay(this, 'chestPainDisplay')">
+                                    <div class="slider-labels">
+                                        <span>None</span>
+                                        <span>Crushing</span>
+                                    </div>
+                                    <div id="chestPainDisplay" class="severity-display">No Chest Pain (0/10)</div>
+                                </div>
+
+                                <div class="symptom-slider-container">
+                                    <label>Heart Palpitations</label>
+                                    <input type="range" class="symptom-slider" id="palpitations" min="0" max="10" value="0" oninput="updateSeverityDisplay(this, 'palpitationsDisplay')">
+                                    <div class="slider-labels">
+                                        <span>None</span>
+                                        <span>Severe</span>
+                                    </div>
+                                    <div id="palpitationsDisplay" class="severity-display">No Palpitations (0/10)</div>
+                                </div>
+                            </div>
+
+                            <!-- Other Critical -->
+                            <div class="symptom-category">
+                                <h4>🩸 Critical Symptoms</h4>
+                                
+                                <div class="symptom-slider-container">
+                                    <label>Bleeding</label>
+                                    <input type="range" class="symptom-slider" id="bleeding" min="0" max="10" value="0" oninput="updateSeverityDisplay(this, 'bleedingDisplay')">
+                                    <div class="slider-labels">
+                                        <span>None</span>
+                                        <span>Severe</span>
+                                    </div>
+                                    <div id="bleedingDisplay" class="severity-display">No Bleeding (0/10)</div>
+                                </div>
+
+                                <div class="symptom-slider-container">
+                                    <label>Nausea/Vomiting</label>
+                                    <input type="range" class="symptom-slider" id="nausea" min="0" max="10" value="0" oninput="updateSeverityDisplay(this, 'nauseaDisplay')">
+                                    <div class="slider-labels">
+                                        <span>None</span>
+                                        <span>Severe</span>
+                                    </div>
+                                    <div id="nauseaDisplay" class="severity-display">No Nausea/Vomiting (0/10)</div>
