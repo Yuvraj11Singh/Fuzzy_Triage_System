@@ -189,7 +189,10 @@ This project is available under the MIT License. See the LICENSE file for more d
 
 ## 👥 Authors
 
-- **Yuvraj Singh** - Initial development and design
+- Yuvraj Singh
+- Satvik Porwal
+- Shams Khan
+- Saurabh P
 
 ## 🙏 Acknowledgments
 
